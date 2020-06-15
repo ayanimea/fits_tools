@@ -11,10 +11,21 @@ import yaml
 def delete_where(input_data, filters):
 
     # Criteria is a dictionary with col name and val limit
-
     filtered_data = np.delete(input_data, filters)
 
     return filtered_data
+
+def filter_data(input_data, criteria_min, criteria_max):
+    filter_min_ra = np.where(input_data['ra_gal'] < criteria_min['ra_gal'])
+    filter_max_ra = np.where(input_data['ra_gal'] > criteria_max['ra_gal'])
+    filter_min_dec = np.where(input_data['dec_gal'] < criteria_min['dec_gal'])
+    filter_max_dec = np.where(input_data['dec_gal'] > criteria_max['dec_gal'])
+
+    filters = np.concatenate((filter_min_ra, filter_max_ra, filter_min_dec, filter_max_dec), axis=None)
+
+    filters = np.unique(filters)
+    input_data = delete_where(input_data, filters)
+    return input_data
 
 def slice_gal(fits_in, fits_out , criteria_min, criteria_max):
     # Criteria is a dictionary with col name and val limit
@@ -30,14 +41,7 @@ def slice_gal(fits_in, fits_out , criteria_min, criteria_max):
         else:
             input_data = np.concatenate((input_data, data))
 
-    filter_min_ra = np.where(input_data['ra_gal'] < criteria_min['ra_gal'])
-    filter_max_ra = np.where(input_data['ra_gal'] > criteria_max['ra_gal'])
-    filter_min_dec = np.where(input_data['dec_gal'] < criteria_min['dec_gal'])
-    filter_max_dec = np.where(input_data['dec_gal'] > criteria_max['dec_gal'])
-
-    filters = np.concatenate((filter_min_ra, filter_max_ra, filter_min_dec, filter_max_dec), axis=None)
-    filters = np.unique(filters)
-    input_data = delete_where(input_data, filters)
+    input_data = filter_data(input_data, criteria_min, criteria_max)
 
     fitsio.write(fits_out, input_data)
 
@@ -55,6 +59,7 @@ def slices_mass_redshift(matching_in, matching_out, criteria_min):
 def read_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-c', '--conf', help='Path of configuration file', type=str)
+    arg_parser.add_argument('-o', '--output', help='Path of output dir', type=str)
     args = arg_parser.parse_args()
 
     return args
@@ -93,48 +98,37 @@ def get_outpath(fullpath_in, dir_out, prefix):
 
     return output_filepath
 
+def slice_catalog(file_information, conf, dir_out, prefix):
+    cat_in = get_fullpath(conf['FILEPATH'])
+    
+    # TODO: Check names
+    lower_right_apex = conf['LOWER_RIGHT_APEX']
+    upper_left_apex = conf['UPPER_LEFT_APEX']
+    
+    print(f'criteria_min: {lower_right_apex}, criteria_max: {upper_left_apex}') 
+    cat_out = get_outpath(cat_in, dir_out, prefix)
+    print(f'{file_information} in: ')
+    pp.pprint(cat_in)
+    slice_gal(cat_in, cat_out, lower_right_apex, upper_left_apex)
+    print(f'{file_information} out: ')
+    pp.pprint(cat_out)
+    
+
+
 if __name__ == "__main__":
     args = read_args()
     pp = pprint.PrettyPrinter(indent=4)
     
-    conf_file = args.conf    
-
-    ra_min = args.ra_min
-    ra_max = args.ra_max
-    dec_min = args.dec_min
-    dec_max = args.dec_max
-
-    print(f'Interval RA:{ra_min}-{ra_max}, Interval Dec:{dec_min}-{dec_max}')
-    if not ra_min or not ra_max or not dec_min or not dec_max:
-        raise AttributError(f'Missing parameter')
-
-    print(f'criteria_min: {criteria_min}, criteria_max: {criteria_max}')
-
-    gal_in = get_fullpath(args.gal)
-    phz_in = get_fullpath(args.phz)
-    matching_in = get_fullpath(args.matching)
-
     prefix = '10sqdeg'
+    conf_file = args.conf    
     dir_out = get_dir_out(args.output, prefix)
-    gal_out = get_outpath(gal_in, dir_out, prefix)
-    phz_out = get_outpath(phz_in, dir_out, prefix)
-    matching_out = get_outpath(matching_in, dir_out, prefix)
+    with open(conf_file, 'r') as stream:
+        try:
+            conf = yaml.safe_load(stream)
+        except yaml.YAMLError as exc:
+            print(exc)
 
-    # TODO: Define criteria's format
-    print(f'Gal in: ')
-    pp.pprint(gal_in)
-    slice_gal(gal_in, gal_out, criteria)
-    print(f'Gal out: ')
-    pp.pprint(gal_out)
-    
-    print(f'PHZ in: ')
-    pp.pprint(phz_in)
-    slice_gal(phz_in, phz_out, criteria)
-    print(f'PHZ out: ')
-    pp.pprint(phz_out)
-    
-    print('Matching in: ')
-    pp.pprint(matching_in)
-    slice_gal(matching_in, matching_out, criteria)
-    print('Matching out: ')
-    pp.pprint(matching_out)
+    for file_information in conf:
+        print(file_information)
+        print(conf[file_information])
+        slice_catalog(file_information, conf[file_information], dir_out, prefix)
