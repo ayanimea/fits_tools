@@ -1,9 +1,12 @@
+# -*- coding: utf-8 -*-
+
 import fitsio
 import numpy as np
 import argparse
 import os
 import glob
 import pprint
+import yaml
 
 def delete_where(input_data, filters):
 
@@ -51,14 +54,7 @@ def slices_mass_redshift(matching_in, matching_out, criteria_min):
 
 def read_args():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('-G', '--gal', help='Path of galaxies_file', type=str)
-    arg_parser.add_argument('-P', '--phz', help='Path of photo_z fileS', type=str)
-    arg_parser.add_argument('-M', '--matching', help='Path of matching files', type=str)
-    arg_parser.add_argument('-O', '--output', help='Output_dir', type=str)
-    arg_parser.add_argument('--ra_min', help='RA min', type=float)
-    arg_parser.add_argument('--ra_max', help='RA max', type=float)
-    arg_parser.add_argument('--dec_min', help='Dec min', type=float)
-    arg_parser.add_argument('--dec_max', help='Dec max', type=float)
+    arg_parser.add_argument('-c', '--conf', help='Path of configuration file', type=str)
     args = arg_parser.parse_args()
 
     return args
@@ -100,6 +96,9 @@ def get_outpath(fullpath_in, dir_out, prefix):
 if __name__ == "__main__":
     args = read_args()
     pp = pprint.PrettyPrinter(indent=4)
+    
+    conf_file = args.conf    
+
     ra_min = args.ra_min
     ra_max = args.ra_max
     dec_min = args.dec_min
@@ -108,9 +107,6 @@ if __name__ == "__main__":
     print(f'Interval RA:{ra_min}-{ra_max}, Interval Dec:{dec_min}-{dec_max}')
     if not ra_min or not ra_max or not dec_min or not dec_max:
         raise AttributError(f'Missing parameter')
-
-    criteria_min = {'ra_gal':ra_min, 'dec_gal':dec_min}
-    criteria_max = {'ra_gal':ra_max, 'dec_gal':dec_max}
 
     print(f'criteria_min: {criteria_min}, criteria_max: {criteria_max}')
 
@@ -124,20 +120,21 @@ if __name__ == "__main__":
     phz_out = get_outpath(phz_in, dir_out, prefix)
     matching_out = get_outpath(matching_in, dir_out, prefix)
 
+    # TODO: Define criteria's format
     print(f'Gal in: ')
     pp.pprint(gal_in)
-    slice_gal(gal_in, gal_out, criteria_min, criteria_max)
+    slice_gal(gal_in, gal_out, criteria)
     print(f'Gal out: ')
     pp.pprint(gal_out)
     
     print(f'PHZ in: ')
     pp.pprint(phz_in)
-    slice_gal(phz_in, phz_out, criteria_min, criteria_max)
+    slice_gal(phz_in, phz_out, criteria)
     print(f'PHZ out: ')
     pp.pprint(phz_out)
     
     print('Matching in: ')
     pp.pprint(matching_in)
-    slice_gal(matching_in, matching_out, criteria_min, criteria_max)
+    slice_gal(matching_in, matching_out, criteria)
     print('Matching out: ')
     pp.pprint(matching_out)
