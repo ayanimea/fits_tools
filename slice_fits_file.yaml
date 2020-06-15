@@ -1,0 +1,25 @@
+# Format:
+# File description: filepath
+GalaxiesFile:  /sps/euclid/OU-LE3/DET_CL/mock1_blind_SC8/Durham_Photreal_300deg2_blind_SC8.fits  
+ UPPER_LEFT_APEX:
+ - RIGHT_ASCENSION = 12
+ - DECLINAISON = 2
+ LOWER_RIGHT_APEX:
+ - RIGHT_ASCENSION = 10
+ - DECLINAISON = -3
+
+PhotoZFile:  /sps/euclid/OU-LE3/DET_CL/mock1_blind_SC8/pdf_mock1_*.fits  
+ UPPER_LEFT_APEX:
+ - RIGHT_ASCENSION = 12
+ - DECLINAISON = 2
+ LOWER_RIGHT_APEX:
+ - RIGHT_ASCENSION = 10
+ - DECLINAISON = -3
+
+MatchingFile:  /sps/euclid/OU-LE3/DET_CL/matching_catalog/haloList/mock1_halo_avg_H100_logM13.0.fits  
+ UPPER_LEFT_APEX:
+ - RIGHT_ASCENSION = 12
+ - DECLINAISON = 2
+ LOWER_RIGHT_APEX:
+ - RIGHT_ASCENSION = 10
+ - DECLINAISON = -3
