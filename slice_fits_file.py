@@ -16,23 +16,38 @@ def delete_where(input_data, filters):
     return filtered_data
 
 def filter_data(input_data, criteria_min, criteria_max):
-    filter_min_ra = np.where(input_data['ra_gal'] < criteria_min['ra_gal'])
-    filter_max_ra = np.where(input_data['ra_gal'] > criteria_max['ra_gal'])
-    filter_min_dec = np.where(input_data['dec_gal'] < criteria_min['dec_gal'])
-    filter_max_dec = np.where(input_data['dec_gal'] > criteria_max['dec_gal'])
+    filters = None
 
-    filters = np.concatenate((filter_min_ra, filter_max_ra, filter_min_dec, filter_max_dec), axis=None)
+    for col_name in criteria_min:
+        filters_min = np.where(input_data[col_name] < criteria_min[col_name])
+        if filters is None:
+            filters = np.copy(filters_min)
+        else:
+            filters = np.concatenate((filters, filters_min), axis=None)
+        
+    for col_name in criteria_max:
+        filters_max = np.where(input_data[col_name] > criteria_max[col_name])
+        if filters is None:
+            filters = np.copy(filters_min)
+        else:
+            filters = np.concatenate((filters, filters_max), axis=None)
+        
+        print(filters)
 
     filters = np.unique(filters)
-    input_data = delete_where(input_data, filters)
+    print(f'filters: {filters}')
+
+    # input_data = delete_where(input_data, filters)
     return input_data
 
-def slice_gal(fits_in, fits_out , criteria_min, criteria_max):
+def slice_gal(fits_in, fits_out , criteria_min=None, criteria_max=None, object_id=None):
     # Criteria is a dictionary with col name and val limit
-
     input_data = None
 
     print(f' fits_in = {fits_in}')
+    print(f' fits_out = {fits_out}')
+    print(f' criteria_min = {criteria_min}')
+    print(f' criteria_max = {criteria_max}')
     
     for each_datafile in fits_in:
         data = fitsio.read(each_datafile)
@@ -41,20 +56,17 @@ def slice_gal(fits_in, fits_out , criteria_min, criteria_max):
         else:
             input_data = np.concatenate((input_data, data))
 
-    input_data = filter_data(input_data, criteria_min, criteria_max)
+    if not object_id:
+        input_data = filter_data(input_data, criteria_min, criteria_max)
+    else:
+        input_data = np.take(input_data, object_id, 'OBJECT_ID')
 
     fitsio.write(fits_out, input_data)
 
-def slices_mass_redshift(matching_in, matching_out, criteria_min):
-    matching = fitsio.read(matching_in)
-
-    filter_min_mass = np.where(matching['H_MASS'] < criteria_min['H_MASS'])
-    filter_min_redshift = np.where(matching['C_Z'] < criteria_min['C_Z'])
-    filter_min_match = np.where(matching['MATCH'] == criteria_min['MATCH'])
-    filters = np.concatenate((filter_min_mass, filter_min_redshift, filter_min_match), axis=None)
-    matching = np.delete(matching, filters)
-
-    fitsio.write(matching_out, matching)
+    try:
+        return input_data['OBJECT_ID']
+    except:
+        return None
 
 def read_args():
     arg_parser = argparse.ArgumentParser()
@@ -88,7 +100,6 @@ def get_dir_out(input_outdir, prefix):
 
 
 def get_outpath(fullpath_in, dir_out, prefix):
-
     try:
         first_file =  sorted(fullpath_in, key=str.lower)[0]
         basename = os.path.basename(first_file)
@@ -98,21 +109,33 @@ def get_outpath(fullpath_in, dir_out, prefix):
 
     return output_filepath
 
-def slice_catalog(file_information, conf, dir_out, prefix):
+def slice_catalog(file_information, conf, dir_out, prefix, object_id=None):
     cat_in = get_fullpath(conf['FILEPATH'])
     
     # TODO: Check names
-    lower_right_apex = conf['LOWER_RIGHT_APEX']
-    upper_left_apex = conf['UPPER_LEFT_APEX']
-    
+    lower_right_apex ={** conf['LOWER_RIGHT_APEX'][0], ** conf['LOWER_RIGHT_APEX'][1]}
+    upper_left_apex = {** conf['UPPER_LEFT_APEX'][0], ** conf['UPPER_LEFT_APEX'][1]}
+
+    # Add index slice 
     print(f'criteria_min: {lower_right_apex}, criteria_max: {upper_left_apex}') 
     cat_out = get_outpath(cat_in, dir_out, prefix)
     print(f'{file_information} in: ')
     pp.pprint(cat_in)
-    slice_gal(cat_in, cat_out, lower_right_apex, upper_left_apex)
+    if object_id is not None:
+        object_id = slice_gal(cat_in, cat_out, object_id)
+    else:
+        object_id = slice_gal(cat_in, cat_out, lower_right_apex, upper_left_apex)
+
     print(f'{file_information} out: ')
     pp.pprint(cat_out)
-    
+
+    try:
+        if conf['JOIN_TO']:
+            return object_id
+        else:
+            return None
+    except: 
+        return None
 
 
 if __name__ == "__main__":
@@ -128,7 +151,7 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
+    object_id = None
     for file_information in conf:
-        print(file_information)
-        print(conf[file_information])
-        slice_catalog(file_information, conf[file_information], dir_out, prefix)
+        object_id = slice_catalog(file_information, conf[file_information], dir_out, prefix, object_id)
+        print(object_id)
