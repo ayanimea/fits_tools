@@ -46,6 +46,7 @@ class Filter:
         return input_data
 
 class Catalog:
+
     @staticmethod
     def slice_gal(fits_in, fits_out , criteria_min=None, criteria_max=None):
         # Criteria is a dictionary with col name and val limit
@@ -62,27 +63,45 @@ class Catalog:
         return None
 
     @staticmethod
-    def slice_catalog(file_information, conf, dir_out, prefix):
-        cat_in = Paths.get_fullpath(conf['FILEPATH'])
-    
-        #  TODO: Check names
-        lower_right_apex ={** conf['LOWER_RIGHT_APEX'][0], ** conf['LOWER_RIGHT_APEX'][1]}
-        upper_left_apex = {** conf['UPPER_LEFT_APEX'][0], ** conf['UPPER_LEFT_APEX'][1]}
-
-        # Add index slice 
-        print(f'criteria_min: {lower_right_apex}, criteria_max: {upper_left_apex}') 
-        cat_out = Paths.get_outpath(cat_in, dir_out, prefix)
-        print(f'{file_information} in: ')
+    def slice_catalog(self):
+        print(f'{self.file_information} in: ')
         pp.pprint(cat_in)
-        Catalog.slice_gal(cat_in, cat_out, lower_right_apex, upper_left_apex)
+        Catalog.slice_gal(cat_in, cat_out, self.lower_right_apex, self.upper_left_apex)
 
-        print(f'{file_information} out: ')
+        print(f'{self.file_information} out: ')
         pp.pprint(cat_out)
+
+    def parse_configuration(self):
+        #  TODO: Check names
+        self.lower_right_apex ={** conf['LOWER_RIGHT_APEX'][0], ** conf['LOWER_RIGHT_APEX'][1]}
+        self.upper_left_apex = {** conf['UPPER_LEFT_APEX'][0], ** conf['UPPER_LEFT_APEX'][1]}
+        print(f'criteria_min: {self.lower_right_apex}, criteria_max: {self.upper_left_apex}') 
+
+    
 
     @staticmethod
     def inner_join(ref_file, coords_file, file_out):
 
         return None
+    
+    def meet_sister(sister_instance, index_name, indexes_to_keep=None):
+        self.index_name = index_name 
+        self.index_to_keep = indexes_to_keep
+        self.sister_catalog = sister_instance
+    
+    
+    def __init__(self, file_information, configuration, cats):
+        self.index_name = None
+        self.index_to_keep = None
+        self.sister_catalog = None
+        self.file_information = file_information
+        self.configuration = configuration 
+        self.cats = cats
+        self.lower_right_apex = None
+        self.upper_left_apex = None
+
+        self.parse_configuration() 
+
 
 class Paths:
     @staticmethod
@@ -112,12 +131,8 @@ class Paths:
 
     @staticmethod
     def get_outpath(fullpath_in, dir_out, prefix):
-        try:
-            first_file =  sorted(fullpath_in, key=str.lower)[0]
-            basename = os.path.basename(first_file)
-            output_filepath = os.path.join(dir_out, prefix + '_' + basename)
-        except IndexError:
-            output_filepath = None
+        basename = os.path.basename(fullpath_in)
+        output_filepath = os.path.join(dir_out, prefix + '_' + basename)
 
         return output_filepath
 
@@ -130,13 +145,22 @@ def read_args():
 
     return args
 
+def cats_files(filepath, dir_out, prefix):
+    cats_in = Paths.get_fullpath(filepath)
+
+    cats_files = {}
+    for cat in cats_in:
+        cats_files[cat] = Paths.get_outpath(cat, dir_out, prefix)
+
+    return cats_files
+
 
 if __name__ == "__main__":
     args = read_args()
     pp = pprint.PrettyPrinter(indent=4)
     
     prefix = '10sqdeg'
-    conf_file = args.conf    
+    conf_file = args.conf  
     dir_out = Paths.get_dir_out(args.output, prefix)
 
     with open(conf_file, 'r') as stream:
@@ -145,5 +169,12 @@ if __name__ == "__main__":
         except yaml.YAMLError as exc:
             print(exc)
 
+    cat_list = {}
+
     for file_information in conf:
-        Catalog.slice_catalog(file_information, conf[file_information], dir_out, prefix)
+        cats = cats_files(conf[file_information]['FILEPATH'], dir_out, prefix)
+        cat_list[file_information] = Catalog(file_information, conf[file_information], cats)
+
+    for cat_name, cat_instance in cat_list:
+        print(f'Cat name: {cat_name}')
+        cat_instance.slice_catalog()
