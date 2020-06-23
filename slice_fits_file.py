@@ -47,8 +47,7 @@ class Filter:
 
 class Catalog:
 
-    @staticmethod
-    def slice_gal(fits_in, fits_out , criteria_min=None, criteria_max=None):
+    def slice_gal(self, fits_in, fits_out , criteria_min=None, criteria_max=None):
         # Criteria is a dictionary with col name and val limit
         input_data = None
 
@@ -62,21 +61,42 @@ class Catalog:
 
         return None
 
-    @staticmethod
     def slice_catalog(self):
         print(f'{self.file_information} in: ')
-        pp.pprint(cat_in)
-        Catalog.slice_gal(cat_in, cat_out, self.lower_right_apex, self.upper_left_apex)
 
-        print(f'{self.file_information} out: ')
-        pp.pprint(cat_out)
+        for cat_in, cat_out in self.cats.items():
+            pp.pprint(cat_in)
+            self.slice_gal(cat_in, cat_out, self.lower_right_apex, self.upper_left_apex)
+            pp.pprint(cat_out)
+
+        print(f'{self.name} out: ')
 
     def parse_configuration(self):
         #  TODO: Check names
-        self.lower_right_apex ={** conf['LOWER_RIGHT_APEX'][0], ** conf['LOWER_RIGHT_APEX'][1]}
-        self.upper_left_apex = {** conf['UPPER_LEFT_APEX'][0], ** conf['UPPER_LEFT_APEX'][1]}
+        self.lower_right_apex ={** self.conf['LOWER_RIGHT_APEX'][0], ** self.conf['LOWER_RIGHT_APEX'][1]}
+        self.upper_left_apex = {** self.conf['UPPER_LEFT_APEX'][0], ** self.conf['UPPER_LEFT_APEX'][1]}
         print(f'criteria_min: {self.lower_right_apex}, criteria_max: {self.upper_left_apex}') 
 
+        try:
+            siblings = self.conf['JOIN_FROM']
+            
+            for sister in siblings:
+                sister_name = list(sister)[0]
+                if sister_name != self.name:
+                    self.older_sister_name.append(sister_name)
+        except KeyError:
+            self.older_sister_name = None
+
+        try:
+            siblings = self.conf['JOIN_TO']
+
+            for sister in siblings:
+                sister_name = list(sister)[0]
+                if sister_name != self.name:
+                    self.little_sister_name.append(sister_name)
+
+        except KeyError:
+            self.little_sister_name = None
     
 
     @staticmethod
@@ -84,21 +104,22 @@ class Catalog:
 
         return None
     
-    def meet_sister(sister_instance, index_name, indexes_to_keep=None):
+    def meet_sister(self, sister_instance, index_name):
         self.index_name = index_name 
-        self.index_to_keep = indexes_to_keep
         self.sister_catalog = sister_instance
     
     
-    def __init__(self, file_information, configuration, cats):
+    def __init__(self, cat_name, configuration, cats):
         self.index_name = None
         self.index_to_keep = None
         self.sister_catalog = None
-        self.file_information = file_information
-        self.configuration = configuration 
+        self.little_sister_name = [] 
+        self.older_sister_name = []
+        self.name = file_information
+        self.conf = configuration 
         self.cats = cats
-        self.lower_right_apex = None
-        self.upper_left_apex = None
+        self.own_index_name = None
+        self.siblings_name = None
 
         self.parse_configuration() 
 
@@ -175,6 +196,13 @@ if __name__ == "__main__":
         cats = cats_files(conf[file_information]['FILEPATH'], dir_out, prefix)
         cat_list[file_information] = Catalog(file_information, conf[file_information], cats)
 
-    for cat_name, cat_instance in cat_list:
+    for cat_name, cat_instance in cat_list.items():
+        import pdb; pdb.set_trace()
+        if cat_instance.little_sister_name:
+            cat_instance.meet_sister(cat_list[cat_instance.little_sister_name[0]])
+        elif cat_instance.older_sister_name:
+            cat_instance.meet_sister(cat_list[ca_instancet.older_sister_name[0]])
+
+    for cat_name, cat_instance in cat_list.items():
         print(f'Cat name: {cat_name}')
         cat_instance.slice_catalog()
