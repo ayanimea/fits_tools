@@ -17,10 +17,8 @@ class Filter:
         return filtered_data
 
     @staticmethod
-    def filter_data(fits_in, fits_out, criteria_min, criteria_max):
+    def filter_data(input_data, criteria_min, criteria_max):
         filters = None
-
-        input_data = fitsio.read(fits_in)
 
         for col_name in criteria_min:
             filters_min = np.where(input_data[col_name] < criteria_min[col_name])
@@ -41,9 +39,7 @@ class Filter:
         filters = np.unique(filters)
         print(f'filters: {filters}')
     
-        fitsio.write(fits_out, input_data)
-
-        return input_data
+        return filters
 
 class Catalog:
 
@@ -56,13 +52,16 @@ class Catalog:
         print(f' criteria_min = {criteria_min}')
         print(f' criteria_max = {criteria_max}')
     
+
         for each_datafile in fits_in:
-            input_data = Filter.filter_data(each_datafile, fits_out, criteria_min, criteria_max)
+            input_data = fitsio.read(each_datafile)
+            input_data = Filter.filter_data(input_data, criteria_min, criteria_max)
+            fitsio.write(fits_out, input_data)
 
         return None
 
     def slice_catalog(self):
-        print(f'{self.file_information} in: ')
+        print(f'{self.name} in: ')
 
         for cat_in, cat_out in self.cats.items():
             pp.pprint(cat_in)
@@ -207,7 +206,6 @@ if __name__ == "__main__":
         elif cat_instance.older_sister_name:
             cat_instance.meet_sister(cat_list[cat_instance.older_sister_name[0]])
 
-    import pdb; pdb.set_trace()
     for cat_name, cat_instance in cat_list.items():
         print(f'Cat name: {cat_name}')
         cat_instance.slice_catalog()
