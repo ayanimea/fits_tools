@@ -84,6 +84,9 @@ class Catalog:
                 sister_name = list(sister)[0]
                 if sister_name != self.name:
                     self.older_sister_name.append(sister_name)
+                    self.siblings_name.append(sister[sister_name])
+                else:
+                    self.own_index_name = sister[self.name]
         except KeyError:
             self.older_sister_name = None
 
@@ -94,6 +97,9 @@ class Catalog:
                 sister_name = list(sister)[0]
                 if sister_name != self.name:
                     self.little_sister_name.append(sister_name)
+                    self.siblings_name.append(sister[sister_name])
+                else:
+                    self.own_index_name = sister[self.name]
 
         except KeyError:
             self.little_sister_name = None
@@ -104,8 +110,7 @@ class Catalog:
 
         return None
     
-    def meet_sister(self, sister_instance, index_name):
-        self.index_name = index_name 
+    def meet_sister(self, sister_instance):
         self.sister_catalog = sister_instance
     
     
@@ -118,8 +123,8 @@ class Catalog:
         self.name = file_information
         self.conf = configuration 
         self.cats = cats
-        self.own_index_name = None
-        self.siblings_name = None
+        self.own_index_name = None 
+        self.siblings_name = []
 
         self.parse_configuration() 
 
@@ -197,12 +202,12 @@ if __name__ == "__main__":
         cat_list[file_information] = Catalog(file_information, conf[file_information], cats)
 
     for cat_name, cat_instance in cat_list.items():
-        import pdb; pdb.set_trace()
         if cat_instance.little_sister_name:
             cat_instance.meet_sister(cat_list[cat_instance.little_sister_name[0]])
         elif cat_instance.older_sister_name:
-            cat_instance.meet_sister(cat_list[ca_instancet.older_sister_name[0]])
+            cat_instance.meet_sister(cat_list[cat_instance.older_sister_name[0]])
 
+    import pdb; pdb.set_trace()
     for cat_name, cat_instance in cat_list.items():
         print(f'Cat name: {cat_name}')
         cat_instance.slice_catalog()
