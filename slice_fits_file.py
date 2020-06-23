@@ -7,6 +7,12 @@ import os
 import glob
 import pprint
 import yaml
+import pandas as pd
+
+def correct_endianness(input_data, needed_endianness):
+
+    return input_data.byteswap().newbyteorder(needed_endianness)
+
 class Filter:
     @staticmethod
     def delete_where(input_data, filters):
@@ -18,29 +24,19 @@ class Filter:
     @staticmethod
     def filter_data(input_data, criteria_min, criteria_max, index_col_name):
         # Criteria is a dictionary with col name and val limit
-        filters = None
-
-        for col_name in criteria_min:
-            filters_min = np.where(input_data[col_name] < criteria_min[col_name])
-            if filters is None:
-                filters = np.copy(filters_min)
-            else:
-                filters = np.concatenate((filters, filters_min), axis=None)
         
+        input_data_native_endian = correct_endianness(input_data, '=')
+        df = pd.DataFrame(input_data_native_endian)
+
+        for col_name, min_value in criteria_min.items():
+            indexes_to_drop = df[df[col_name] < min_value].index
+            df.drop(indexes_to_drop, inplace=True)
+ 
         for col_name in criteria_max:
-            filters_max = np.where(input_data[col_name] > criteria_max[col_name])
-            if filters is None:
-                filters = np.copy(filters_min)
-            else:
-                filters = np.concatenate((filters, filters_max), axis=None)
+            df.drop(df[df[col_name] > criteria_max[col_name]].index, inplace=True)
         
-            print(filters)
 
-        filters = np.unique(filters)
-        print(f'filters: {filters}')
-  
-         
-        return filters
+        return df
 
 class Catalog:
 
