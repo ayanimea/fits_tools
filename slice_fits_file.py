@@ -10,7 +10,6 @@ import yaml
 import pandas as pd
 
 def correct_endianness(input_data, needed_endianness):
-
     return input_data.byteswap().newbyteorder(needed_endianness)
 
 class Filter:
@@ -141,16 +140,11 @@ class Paths:
 
     @staticmethod
     def get_dir_out(input_outdir, prefix):
-        try:
+        os.makedirs(input_outdir, exist_ok=True)
+        if input_outdir is not None:
             dir_out = Paths.get_fullpath(input_outdir)[0]
-        except IndexError:
+        else:
             dir_out = os.path.join(os.getcwd(), prefix + '_fits_slices')
-
-            try:
-                os.mkdir(dir_out)
-                print("Directory " , dir_out ,  "created.") 
-            except FileExistsError:
-                print("Directory " , dir_out ,  " already exists.")
 
         return dir_out
 
@@ -182,6 +176,7 @@ def cats_files(filepath, dir_out, prefix):
 
 
 if __name__ == "__main__":
+
     args = read_args()
     pp = pprint.PrettyPrinter(indent=4)
     
