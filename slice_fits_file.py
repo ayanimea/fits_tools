@@ -14,28 +14,36 @@ def correct_endianness(input_data, needed_endianness):
 
 class Filter:
     @staticmethod
-    def delete_where(input_data, filters):
-
-        filtered_data = np.delete(input_data, filters, axis=0)
-
-        return filtered_data
-
-    @staticmethod
-    def filter_data(input_data, criteria_min, criteria_max, index_col_name):
+    def filter_data_by_crit(input_data, criteria_min, criteria_max):
         # Criteria is a dictionary with col name and val limit
         
-        input_data_native_endian = correct_endianness(input_data, '=')
-        df = pd.DataFrame(input_data_native_endian)
+        # input_data_native_endian = correct_endianness(input_data, '=')
+        # df = pd.DataFrame(input_data_native_endian)
+
+        # for col_name, min_value in criteria_min.items():
+        #     indexes_to_drop = df[df[col_name] < min_value].index
+        #     df.drop(indexes_to_drop, inplace=True)
+ 
+        # for col_name in criteria_max:
+        #     df.drop(df[df[col_name] > criteria_max[col_name]].index, inplace=True)
 
         for col_name, min_value in criteria_min.items():
-            indexes_to_drop = df[df[col_name] < min_value].index
-            df.drop(indexes_to_drop, inplace=True)
- 
-        for col_name in criteria_max:
-            df.drop(df[df[col_name] > criteria_max[col_name]].index, inplace=True)
+            input_data = input_data[input_data[col_name] < min_value]
         
+        for col_name, max_value in criteria_max.items():
+            input_data = input_data[input_data[col_name] > max_value]
+        
+        return input_data
 
-        return df
+    @staticmethod
+    def filter_data_by_index(input_data, indexes_to_remove, index_col_name):
+
+        col_filter = np.in1d(input_data[index_col_name], indexes_to_remove, assume_unique=True)
+
+        output_data = input_data[col_filter]
+
+        return output_data
+    
 
 class Catalog:
 
@@ -52,10 +60,11 @@ class Catalog:
         input_data = fitsio.read(fits_in)
         if self.older_sister_name is not None:
             self.indexes_to_remove = self.sister_catalog.indexes_to_remove
+            input_data = Filter.filter_data_by_index(input_data, self.indexes_to_remove, self.own_index_name)
         else:
-            self.indexes_to_remove = Filter.filter_data(input_data, criteria_min, criteria_max, self.own_index_name)
-            
-        input_data = Filter.delete_where(input_data, self.indexes_to_remove)
+            input_data = Filter.filter_data_by_crit(input_data, criteria_min, criteria_max)
+            self.indexes_to_remove = input_data[self.own_index_name]
+
         fitsio.write(fits_out, input_data)
 
         return None
@@ -131,20 +140,18 @@ class Catalog:
 class Paths:
     @staticmethod
     def get_fullpath(path):
-        try:
-            fullpath = glob.glob(os.path.abspath(path))
-        except TypeError:
-            fullpath = []
-
-        return fullpath
+        return glob.glob(os.path.abspath(path))
 
     @staticmethod
     def get_dir_out(input_outdir, prefix):
-        os.makedirs(input_outdir, exist_ok=True)
-        if input_outdir is not None:
-            dir_out = Paths.get_fullpath(input_outdir)[0]
-        else:
-            dir_out = os.path.join(os.getcwd(), prefix + '_fits_slices')
+        import pdb; pdb.set_trace
+        try:
+            os.makedirs(input_outdir, exist_ok=True)
+        except TypeError:
+            input_outdir = os.path.join(os.getcwd(), prefix + '_fits_slices')
+            os.makedirs(input_outdir, exist_ok=True)
+            
+        dir_out = Paths.get_fullpath(input_outdir)[0]
 
         return dir_out
 
