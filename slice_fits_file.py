@@ -11,13 +11,13 @@ class Filter:
     @staticmethod
     def delete_where(input_data, filters):
 
-        # Criteria is a dictionary with col name and val limit
-        filtered_data = np.delete(input_data, filters)
+        filtered_data = np.delete(input_data, filters, axis=0)
 
         return filtered_data
 
     @staticmethod
-    def filter_data(input_data, criteria_min, criteria_max):
+    def filter_data(input_data, criteria_min, criteria_max, index_col_name):
+        # Criteria is a dictionary with col name and val limit
         filters = None
 
         for col_name in criteria_min:
@@ -38,7 +38,8 @@ class Filter:
 
         filters = np.unique(filters)
         print(f'filters: {filters}')
-    
+  
+         
         return filters
 
 class Catalog:
@@ -53,10 +54,14 @@ class Catalog:
         print(f' criteria_max = {criteria_max}')
     
 
-        for each_datafile in fits_in:
-            input_data = fitsio.read(each_datafile)
-            input_data = Filter.filter_data(input_data, criteria_min, criteria_max)
-            fitsio.write(fits_out, input_data)
+        input_data = fitsio.read(fits_in)
+        if self.older_sister_name is not None:
+            self.indexes_to_remove = self.sister_catalog.indexes_to_remove
+        else:
+            self.indexes_to_remove = Filter.filter_data(input_data, criteria_min, criteria_max, self.own_index_name)
+            
+        input_data = Filter.delete_where(input_data, self.indexes_to_remove)
+        fitsio.write(fits_out, input_data)
 
         return None
 
