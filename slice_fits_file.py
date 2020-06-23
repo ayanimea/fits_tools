@@ -144,7 +144,6 @@ class Paths:
 
     @staticmethod
     def get_dir_out(input_outdir, prefix):
-        import pdb; pdb.set_trace
         try:
             os.makedirs(input_outdir, exist_ok=True)
         except TypeError:
@@ -159,7 +158,11 @@ class Paths:
     @staticmethod
     def get_outpath(fullpath_in, dir_out, prefix):
         basename = os.path.basename(fullpath_in)
-        output_filepath = os.path.join(dir_out, prefix + '_' + basename)
+
+        if prefix:
+            output_filepath = os.path.join(dir_out, prefix + '_' + basename)
+        else:
+            output_filepath = os.path.join(dir_out, basename)
 
         return output_filepath
 
@@ -168,6 +171,7 @@ def read_args():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('-c', '--conf', help='Path of configuration file', type=str)
     arg_parser.add_argument('-o', '--output', help='Path of output dir', type=str)
+    arg_parser.add_argument('-p', '--prefix', help='Folder and files prefix', type=str)
     args = arg_parser.parse_args()
 
     return args
@@ -186,8 +190,11 @@ if __name__ == "__main__":
 
     args = read_args()
     pp = pprint.PrettyPrinter(indent=4)
-    
-    prefix = '10sqdeg'
+   
+    if args.prefix is None: 
+        prefix = args.prefix
+    else:
+        prefix = ''
     conf_file = args.conf  
     dir_out = Paths.get_dir_out(args.output, prefix)
 
