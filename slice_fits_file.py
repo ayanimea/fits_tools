@@ -28,10 +28,10 @@ class Filter:
         #     df.drop(df[df[col_name] > criteria_max[col_name]].index, inplace=True)
 
         for col_name, min_value in criteria_min.items():
-            input_data = input_data[input_data[col_name] < min_value]
+            input_data = input_data[input_data[col_name] > min_value]
         
         for col_name, max_value in criteria_max.items():
-            input_data = input_data[input_data[col_name] > max_value]
+            input_data = input_data[input_data[col_name] < max_value]
         
         return input_data
 
@@ -56,7 +56,6 @@ class Catalog:
         print(f' criteria_min = {criteria_min}')
         print(f' criteria_max = {criteria_max}')
     
-
         input_data = fitsio.read(fits_in)
         if self.older_sister_name is not None:
             self.indexes_to_remove = self.sister_catalog.indexes_to_remove
@@ -147,7 +146,10 @@ class Paths:
         try:
             os.makedirs(input_outdir, exist_ok=True)
         except TypeError:
-            input_outdir = os.path.join(os.getcwd(), prefix + '_fits_slices')
+            if prefix:
+                input_outdir = os.path.join(os.getcwd(), prefix + '_fits_slices')
+            else:
+                input_outdir = os.path.join(os.getcwd(), 'fits_slices')
             os.makedirs(input_outdir, exist_ok=True)
             
         dir_out = Paths.get_fullpath(input_outdir)[0]
