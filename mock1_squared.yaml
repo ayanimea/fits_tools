@@ -1,0 +1,14 @@
+GalaxiesFile: 
+  FILEPATH: /sps/euclid/OU-LE3/DET_CL/mock1_blind_SC8/Durham_Photreal_300deg2_blind_SC8.fits
+  LOWER_RIGHT_APEX: [RIGHT_ASCENSION: 10.90, DECLINATION: -8.03]
+  UPPER_LEFT_APEX:  [RIGHT_ASCENSION: 24.12, DECLINATION: 6.18]
+  JOIN_TO: [GalaxiesFile: OBJECT_ID, PhotoZFile: OBJECT_ID]
+PhotoZFile: 
+  FILEPATH: /sps/euclid/OU-LE3/DET_CL/mock1_blind_SC8/pdf_mock1_*.fits
+  LOWER_RIGHT_APEX: [RIGHT_ASCENSION: 10.90, DECLINATION: -8.03]
+  UPPER_LEFT_APEX:  [RIGHT_ASCENSION: 24.12, DECLINATION: 6.18]
+  JOIN_FROM: [GalaxiesFile: OBJECT_ID, PhotoZFile: OBJECT_ID]
+MatchingFile: 
+  FILEPATH: /sps/euclid/OU-LE3/DET_CL/matching_catalog/haloList/mock1_halo_bcg_H100_logM13.0.fits
+  LOWER_RIGHT_APEX: [ra: 10.90, dec: -8.03]
+  UPPER_LEFT_APEX:  [ra: 24.12, dec: 6.18]
