@@ -1,0 +1,14 @@
+GalaxiesFile:
+  FILEPATH: /media/sf_Euclid/Dataset/mock1_blind_CFC4/Durham_Photreal_300deg2_blind.fits
+  LOWER_RIGHT_APEX: [ra: 10.90, dec: -8.03]
+  UPPER_LEFT_APEX:  [ra: 24.12, dec: 6.18]
+  JOIN_TO: [GalaxiesFile: ID, PhotoZFile: ID]
+PhotoZFile:
+  FILEPATH: /media/sf_Euclid/Dataset/mock1_blind_CFC4/PDFs/pdf_mock1_*.fits
+  LOWER_RIGHT_APEX: [ra: 10.90, dec: -8.03]
+  UPPER_LEFT_APEX:  [ra: 24.12, dec: 6.18]
+  JOIN_FROM: [GalaxiesFile: ID, PhotoZFile: ID]
+MatchingFile:
+  FILEPATH: /media/sf_Euclid/Dataset/mock1_blind_CFC4/mock1_halo_bcg_H100_logM13.0.fits
+  LOWER_RIGHT_APEX: [ra: 10.90, dec: -8.03]
+  UPPER_LEFT_APEX:  [ra: 24.12, dec: 6.18]
