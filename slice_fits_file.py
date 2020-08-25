@@ -79,10 +79,16 @@ class Catalog:
         print(f'{self.name} out: ')
 
     def parse_configuration(self):
-        #  TODO: Check names
-        self.lower_right_apex ={** self.conf['LOWER_RIGHT_APEX'][0], ** self.conf['LOWER_RIGHT_APEX'][1]}
-        self.upper_left_apex = {** self.conf['UPPER_LEFT_APEX'][0], ** self.conf['UPPER_LEFT_APEX'][1]}
-        print(f'criteria_min: {self.lower_right_apex}, criteria_max: {self.upper_left_apex}') 
+
+        try:
+            #  TODO: Check names
+            self.lower_right_apex ={** self.conf['LOWER_RIGHT_APEX'][0], ** self.conf['LOWER_RIGHT_APEX'][1]}
+            self.upper_left_apex = {** self.conf['UPPER_LEFT_APEX'][0], ** self.conf['UPPER_LEFT_APEX'][1]}
+            print(f'criteria_min: {self.lower_right_apex}, criteria_max: {self.upper_left_apex}') 
+        except KeyError:
+            print(f'Missing apex key. Not slicing anything')
+            self.lower_right_apex = None 
+            self.upper_left_apex = None 
 
         try:
             siblings = self.conf['JOIN_FROM']

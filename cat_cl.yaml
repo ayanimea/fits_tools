@@ -1,0 +1,6 @@
+PzwavFile: 
+  FILEPATH: /pbs/home/s/smourre/fits_tools/det_rich_output/pzwav_stub.fits
+  JOIN_TO: [RichFile: ID_CLUSTER]
+RichFile: 
+  FILEPATH: /pbs/home/s/smourre/fits_tools/det_rich_output/pzwav_stub.fits
+  JOIN_TO: [PzwavFile: ID_CLUSTER]
