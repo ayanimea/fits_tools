@@ -299,18 +299,10 @@ if __name__ == '__main__':
     data_zcl = gen_zcl_output(Z)
     data_prof = gen_prof_output(RA, DEC)
 
-    # Write primary HDU
-    fitsio.write(amico_file, None, header=header_amico)
-    fitsio.write(pzwav_file, None, header=header_pzwav)
-    fitsio.write(richcl_file, None, header=header_richcl)
-    fitsio.write(rich_amico_file, None, header=header_rich_amico)
-    fitsio.write(zcl_file, None, header=header_zcl)
-    fitsio.write(prof_file, None, header=header_prof)
-
-    # Write catalogs
-    fitsio.write(amico_file, data_amico)
-    fitsio.write(pzwav_file, data_pzwav)
-    fitsio.write(richcl_file, data_richcl)
-    fitsio.write(rich_amico_file, data_rich_amico)
-    fitsio.write(zcl_file, data_zcl)
-    fitsio.write(prof_file, data_prof)
+    # Write catalogs 
+    fitsio.write(amico_file, data_amico, header=header_amico)
+    fitsio.write(pzwav_file, data_pzwav, header=header_pzwav)
+    fitsio.write(richcl_file, data_richcl, header=header_richcl)
+    fitsio.write(rich_amico_file, data_rich_amico, header=header_rich_amico)
+    fitsio.write(zcl_file, data_zcl, header=header_zcl)
+    fitsio.write(prof_file, data_prof, header=header_prof)

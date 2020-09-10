@@ -32,6 +32,11 @@ def compare_gal_files(file1, file2):
 
     return result
 
+def compare_to_ref(file1, file2):
+    from astropy.io.fits import FITSDiff
+    diff = FITSDiff(file1, file2) 
+    print(diff.report())
+
 if __name__ == "__main__":
     # file1 is old
     # file2 is new
@@ -44,4 +49,6 @@ if __name__ == "__main__":
     if sys.argv[1] is "out":
         print(f"Result: {compare_out_files(file1, file2)}")
     else:
-        print(f"Result: {compare_gal_files(file1, file2)}")
+    #    print(f"Result: {compare_gal_files(file1, file2)}")
+    
+        print(f"Result: {compare_to_ref(file1, file2)}")

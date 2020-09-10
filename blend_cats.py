@@ -5,8 +5,7 @@ import os
 
 def read(input_folder, file_name):
     data_file = os.path.join(input_folder, file_name)
-    header = fitsio.read_header(data_file)
-    data = fitsio.read(data_file)
+    data, header = fitsio.read(data_file, header=True)
 
     data = data.byteswap().newbyteorder('=')
     
@@ -53,13 +52,9 @@ def cat_fully_characterized_clusters(catalogs, header, output_cat_file):
 
     cat_concat['ID_UNIQUE_CLUSTER'] = np.array(range(cat_concat.shape[0]))
     cat_concat['CROSS_ID_CLUSTER'] = np.ones(cat_concat.shape[0]) * -1
-    fitsio.write(output_cat_file, None, header=header)
-    fitsio.write(output_cat_file, cat_concat.to_records(index=False))
+    import pdb; pdb.set_trace()
+    fitsio.write(output_cat_file, cat_concat.to_records(index=False), header=header)
     
-def compare_to_ref(output_folder):
-    from astropy.io.fits import FITSDiff
-    diff = FITSDiff(cat_file, os.path.join(output_folder, 'test.fits')) 
-    print(diff.report())
 
 def clean_keywords(header):
     header.delete('DET_CODE')
@@ -70,6 +65,7 @@ def clean_keywords(header):
     header['SN_THR'] = snr_threshold
     header.delete('MODEL_ID')
     header.delete('HUBBLE_PAR')
+    header.delete('COMMENT')
 
     return header
 
@@ -86,9 +82,9 @@ if __name__ == '__main__':
         os.remove(test_file)
 
     full_amico, header_amico = characterize_clusters(input_folder, 'amico_stub.fits', 1, ('richcl_stub.fits', 'zcl_stub.fits',
-                                                    'prof_stub.fits'))
+                                                    'prof_stub.fits', 'rich_amico_stub.fits'))
     full_pzwav, header_pzwav = characterize_clusters(input_folder, 'pzwav_stub.fits', 2, ('richcl_stub.fits', 'zcl_stub.fits',
-                                                    'prof_stub.fits'))
+                                                    'prof_stub.fits', 'rich_amico_stub.fits'))
     header_amico['DET_CODE_1'] = 'AMICO'
     header_pzwav['DET_CODE_2'] = 'PZWAV'
     header = merge_headers(header_amico, header_pzwav)
