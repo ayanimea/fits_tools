@@ -1,6 +1,7 @@
 import fitsio
+from fitsio import FITSHDR
 import numpy as np
-import pandas as pd
+from astropy.table import Table, join, vstack
 import os
 
 def read(input_folder, file_name):
@@ -8,14 +9,25 @@ def read(input_folder, file_name):
     data, header = fitsio.read(data_file, header=True)
 
     data = data.byteswap().newbyteorder('=')
-    
-    return pd.DataFrame.from_records(data), header
+    return Table(data), header
 
 def merge_headers(base_header, in_header):
-    in_dict = in_header.records()
+    keywords_list = in_header.records()
+    base_header_list = base_header.records()
+    to_delete_keywords = ['TFORM', 'FROM_DENSITY_MAP',
+                          'TTYPE', 'NAXIS', 'TFIELDS', 'GCOUNT', 'PCOUNT',
+                          'BITPIX', 'XTENSION'] 
 
-    for record in in_dict:
-        base_header.add_record(record)
+    out_dict = [] 
+    for key in base_header_list:
+        if not any(keyword in key['name'] for keyword in to_delete_keywords):
+            out_dict.append(key) 
+
+    for key in keywords_list:
+        if not any(keyword in key['name'] for keyword in to_delete_keywords):
+            out_dict.append(key)
+
+    base_header = FITSHDR(out_dict)
 
     return base_header 
 
@@ -23,10 +35,10 @@ def characterize_clusters(input_folder, cat_file, det_code, characterization_fil
     
     cat_merge, header_merge = read(input_folder, cat_file)
    
-    cat_merge['DET_CODE_NB'] = np.ones(cat_merge.shape[0]) * det_code
+    cat_merge['DET_CODE_NB'] = np.ones(len(cat_merge)) * det_code
     for catalog_file in characterization_files:
         catalog, header = read(input_folder, catalog_file)
-        cat_merge = pd.merge(cat_merge, catalog, how='left', on='ID_CLUSTER')
+        cat_merge = join(cat_merge, catalog, keys='ID_CLUSTER')
         header_merge = merge_headers(header_merge, header)
 
     return cat_merge, header_merge
@@ -39,32 +51,23 @@ def cat_fully_characterized_clusters(catalogs, header, output_cat_file):
         if cat_concat is None:
             cat_concat = catalog
         else:
-            cat_concat = pd.concat((cat_concat, catalog))
+            cat_concat = vstack((cat_concat, catalog))
+    cat_concat.rename_columns(['ID_CLUSTER', 'RICHNESS_VEC', 'RICHNESS_ERR_VEC',
+                               'RADIUS_VEC', 'RICHNESS', 'RICHNESS_ERR', 'RADIUS',
+                               'BKG_FRACTION'],
+                              ['ID_DET_CLUSTER', 'RICHNESS_VEC_PMEM', 'RICHNESS_ERR_VEC_PMEM',
+                               'RADIUS_VEC_PMEM', 'RICHNESS_PMEM', 'RICHNESS_ERR_PMEM', 'RADIUS_PMEM',
+                               'BKG_FRACTION_PMEM'])
 
-    cat_concat.rename(columns={'ID_CLUSTER':'ID_DET_CLUSTER',
-                               'RICHNESS_VEC':'RICHNESS_VEC_PMEM',
-                               'RICHNESS_ERR_VEC': 'RICHNESS_ERR_VEC_PMEM',
-                               'RADIUS_VEC':'RADIUS_VEC_PMEM',
-                               'RICHNESS':'RICHNESS_PMEM',
-                               'RICHNESS_ERR':'RICHNESS_ERR_PMEM',
-                               'RADIUS': 'RADIUS_PMEM',
-                               'BKG_FRACTION': 'BKG_FRACTION_PMEM'}, inplace=True)
-
-    cat_concat['ID_UNIQUE_CLUSTER'] = np.array(range(cat_concat.shape[0]))
-    cat_concat['CROSS_ID_CLUSTER'] = np.ones(cat_concat.shape[0]) * -1
-    import pdb; pdb.set_trace()
-    fitsio.write(output_cat_file, cat_concat.to_records(index=False), header=header)
+    cat_concat['ID_UNIQUE_CLUSTER'] = np.array(range(len(cat_concat)))
+    cat_concat['CROSS_ID_CLUSTER'] = np.ones(len(cat_concat)) * -1
+    fitsio.write(output_cat_file, cat_concat.as_array(), header=header)
     
 
 def clean_keywords(header):
     header.delete('DET_CODE')
     header.delete('DETCODE')
-    hubble_const = header['HUBBLE_PAR'] 
-    header['HUBBLE_CONST'] = hubble_const
-    snr_threshold = header['SNR_THR']
-    header['SN_THR'] = snr_threshold
     header.delete('MODEL_ID')
-    header.delete('HUBBLE_PAR')
     header.delete('COMMENT')
 
     return header
@@ -88,6 +91,5 @@ if __name__ == '__main__':
     header_amico['DET_CODE_1'] = 'AMICO'
     header_pzwav['DET_CODE_2'] = 'PZWAV'
     header = merge_headers(header_amico, header_pzwav)
-
     header = clean_keywords(header)
     cat_fully_characterized_clusters((full_amico, full_pzwav), header, cat_file)
