@@ -257,6 +257,68 @@ def clean_old_files(dirty_file):
     if os.path.exists(dirty_file): 
         os.remove(dirty_file)
 
+import xml.dom.minidom as minidom
+import xml.etree.ElementTree as ET
+def prettify_xml(elem):
+    """Return a pretty-printed XML string for the Element.
+    """
+    rough_string = ET.tostring(elem, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
+
+def fill_header(header):
+    ET.SubElement(header, "ProductId").text= "61044e80-fed2-427b-aabf-c608980814a5"
+    ET.SubElement(header, "ProductType").text= "TestProduct"
+    ET.SubElement(header, "SoftwareName").text= "NA"
+    ET.SubElement(header, "SoftwareRelease").text= "3.5"
+    ET.SubElement(header, "EuclidPipelineSoftwareRelease").text= "0.0"
+    ET.SubElement(header, "ProdSDC").text= "SDC-FR"
+    ET.SubElement(header, "DataSetRelease").text= "NA"
+    ET.SubElement(header, "Purpose").text= "UNKNOWN"
+    ET.SubElement(header, "PlanId").text= "ec0f9326-5e57-4e36-af30-8b6352c1a650"
+    ET.SubElement(header, "PPOId").text= "bbab3151-64b7-4155-b2d3-080fd84e3287"
+    ET.SubElement(header, "PipelineDefinitionId").text= "PipelineDefinitionId"
+    ET.SubElement(header, "PipelineRun").text= "NA"
+    ET.SubElement(header, "ExitStatusCode").text= "NA"
+    ET.SubElement(header, "ManualValidationStatus").text= "UNKNOWN"
+    ET.SubElement(header, "ExpirationDate").text= "2020-07-09T10:48:43.495Z"
+    ET.SubElement(header, "ToBePublished").text= "false"
+    ET.SubElement(header, "Published").text= "false"
+    ET.SubElement(header, "Curator").text= "Curator0"
+    ET.SubElement(header, "CreationDate").text= "2020-07-09T10:48:43.495Z"
+
+    return header
+
+def create_xml(filepath_fits, filepath_xml, catname, catnamespace, header_data):
+    ET.register_namespace('0', catnamespace)
+    root = ET.Element(catname)
+    header = ET.SubElement(root, "Header")
+    header = fill_header(header)
+    data = ET.SubElement(root, "Data")
+
+    for name, value in header_data.items():
+        ET.SubElement(data, name).text = str(value)
+    catalog = ET.SubElement(data, "Catalog")
+    data_container = ET.SubElement(catalog, "DataContainer")
+    filename = ET.SubElement(data_container, "Filename").text = filepath_fits
+ 
+    with open(filepath_xml, "x") as f:
+        f.write(prettify_xml(root))
+    print(f'Created {filepath_xml}')
+    return None
+
+def clean_and_create_file(output_folder, filename):
+    filepath_fits = os.path.join(output_folder, filename + '.fits')
+    filepath_xml = os.path.join(output_folder, filename + '.xml')
+    clean_old_files(filepath_fits)
+    clean_old_files(filepath_xml)
+    
+    return filepath_fits, filepath_xml
+
+def write_catalogs(filepath_fits, filepath_xml, data, header, catname, catnamespace):
+    fitsio.write(filepath_fits, data, header=header)
+    print(f'Created {filepath_fits}')
+    create_xml(filepath_fits, filepath_xml, catname, catnamespace, header)
 
 if __name__ == '__main__':
     # Constants
@@ -267,42 +329,50 @@ if __name__ == '__main__':
     output_folder = os.path.join(os.getcwd(), 'det_rich_output')
 
     # Choose paths
-    amico_file = os.path.join(output_folder, 'amico_stub.fits')
-    pzwav_file = os.path.join(output_folder, 'pzwav_stub.fits')
-    richcl_file = os.path.join(output_folder, 'richcl_stub.fits')
-    rich_amico_file = os.path.join(output_folder, 'rich_amico_stub.fits')
-    zcl_file = os.path.join(output_folder, 'zcl_stub.fits')
-    prof_file = os.path.join(output_folder, 'prof_stub.fits')
-
-    # Clean old files
-    clean_old_files(amico_file)
-    clean_old_files(pzwav_file)
-    clean_old_files(richcl_file)
-    clean_old_files(rich_amico_file)
-    clean_old_files(zcl_file)
-    clean_old_files(prof_file)
+    pzwav_file, pzwav_file_xml = clean_and_create_file(output_folder, 'pzwav_dummy')
+    amico_file, amico_file_xml = clean_and_create_file(output_folder, 'amico_dummy')
+    richcl_amico_file, richcl_amico_file_xml = clean_and_create_file(output_folder, 'richcl_amico_dummy')
+    richcl_pzwav_file, richcl_pzwav_file_xml = clean_and_create_file(output_folder, 'richcl_pzwav_dummy')
+    zcl_pzwav_file, zcl_pzwav_file_xml = clean_and_create_file(output_folder, 'zcl_pzwav_dummy')
+    zcl_amico_file, zcl_amico_file_xml = clean_and_create_file(output_folder, 'zcl_amico_dummy')
+    amico_membership_from_am_file, amico_membership_from_am_file_xml = clean_and_create_file(output_folder, 'amico_membership_from_am_dummy')
+    amico_membership_from_rich_file, amico_membership_from_rich_file_xml = clean_and_create_file(output_folder, 'amico_membership_from_rich_dummy')
+    pzwav_membership_file, pzwav_membership_file_xml = clean_and_create_file(output_folder, 'pzwav_membership_dummy')
+    prof_file, prof_file_xml = clean_and_create_file(output_folder, 'prof_dummy')
 
 
     # Generate headers
     header_amico = gen_amico_header(RA, DEC, Z)
     header_pzwav = gen_pzwav_header(RA, DEC, Z)
-    header_richcl = gen_richcl_header(RA, DEC)
-    header_rich_amico = gen_rich_amico_header()
-    header_zcl = gen_zcl_header()
+    header_richcl_amico = gen_richcl_header(RA, DEC)
+    header_richcl_pzwav = gen_richcl_header(RA, DEC)
+    header_zcl_pzwav = gen_zcl_header()
+    header_zcl_amico = gen_zcl_header()
+    header_amico_membership_from_am = None 
+    header_amico_membership_from_rich = None 
+    header_pzwav_membership = None
     header_prof = gen_prof_header(RA, DEC, Z)
     
     # Generate data 
     data_amico = gen_detcl_output(RA, DEC, Z)
     data_pzwav = gen_detcl_output(RA, DEC, Z)
-    data_richcl = gen_richcl_output()
-    data_rich_amico = gen_rich_amico_output()
-    data_zcl = gen_zcl_output(Z)
+    data_richcl_amico = gen_richcl_output()
+    data_richcl_pzwav = gen_richcl_output()
+    data_zcl_pzwav = gen_zcl_output(Z)
+    data_zcl_amico = gen_zcl_output(Z)
+    data_amico_membership_from_am = gen_rich_amico_output()
+    data_amico_membership_from_rich = None
+    data_pzwav_membership = None
     data_prof = gen_prof_output(RA, DEC)
 
     # Write catalogs 
-    fitsio.write(amico_file, data_amico, header=header_amico)
-    fitsio.write(pzwav_file, data_pzwav, header=header_pzwav)
-    fitsio.write(richcl_file, data_richcl, header=header_richcl)
-    fitsio.write(rich_amico_file, data_rich_amico, header=header_rich_amico)
-    fitsio.write(zcl_file, data_zcl, header=header_zcl)
-    fitsio.write(prof_file, data_prof, header=header_prof)
+    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, 'DpdLE3clDetInputDataCat', "http://euclid.esa.org/schema/dpd/le3/cl/det/inp/detcatdatain")
+    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico)
+    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico)
+    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav)
+    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav)
+    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico)
+    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico_membership_from_am)
+    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich)
+    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership)
+    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof)
