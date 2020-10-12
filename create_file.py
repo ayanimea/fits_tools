@@ -262,9 +262,10 @@ import xml.etree.ElementTree as ET
 def prettify_xml(elem):
     """Return a pretty-printed XML string for the Element.
     """
-    rough_string = ET.tostring(elem, 'utf-8')
+    rough_string = ET.tostring(elem)
     reparsed = minidom.parseString(rough_string)
-    return reparsed.toprettyxml(indent="  ")
+    string = reparsed.toprettyxml(indent="  ", encoding="UTF-8")
+    return string.decode('utf-8') 
 
 def fill_header(header):
     ET.SubElement(header, "ProductId").text= "61044e80-fed2-427b-aabf-c608980814a5"
@@ -296,8 +297,10 @@ def create_xml(filepath_fits, filepath_xml, catname, catnamespace, header_data):
     header = fill_header(header)
     data = ET.SubElement(root, "Data")
 
-    for name, value in header_data.items():
-        ET.SubElement(data, name).text = str(value)
+    if header_data:
+        for name, value in header_data.items():
+            ET.SubElement(data, name).text = str(value)
+
     catalog = ET.SubElement(data, "Catalog")
     data_container = ET.SubElement(catalog, "DataContainer")
     filename = ET.SubElement(data_container, "Filename").text = filepath_fits
@@ -366,13 +369,13 @@ if __name__ == '__main__':
     data_prof = gen_prof_output(RA, DEC)
 
     # Write catalogs 
-    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, 'DpdLE3clDetInputDataCat', "http://euclid.esa.org/schema/dpd/le3/cl/det/inp/detcatdatain")
-    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico)
-    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico)
-    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav)
-    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav)
-    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico)
-    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico_membership_from_am)
-    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich)
-    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership)
-    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof)
+    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
+    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
+    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico, "DpdLE3clRichness", "http://euclid.esa.org/schema/dpd/le3/cl/richrichness")
+    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav, "DpdLE3clRichness", "http://euclid.esa.org/schema/dpd/le3/cl/richrichness")
+    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav, "DpdLE3clZClOutput", "http://euclid.esa.org/schema/dpd/le3/cl/zcloutput")
+    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico, "DpdLE3clZClOutput", "http://euclid.esa.org/schema/dpd/le3/cl/zcloutput")
+    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico_membership_from_am, "dpdLE3clCcpMembers", "http://euclid.esa.org/schema/dpd/le3/cl/ccpmembership")
+    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
+    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
+    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, "DpdLE3clCcpInputCat", "http://euclid.esa    .org/schema/dpd/le3/cl/ccpcatin")
