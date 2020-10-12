@@ -292,7 +292,9 @@ def fill_header(header):
 
 def create_xml(filepath_fits, filepath_xml, catname, catnamespace, header_data):
     ET.register_namespace('0', catnamespace)
-    root = ET.Element(catname)
+    root = ET.Element("ns1:" + catname)
+    root.set("xmlns:ns1", catnamespace)
+
     header = ET.SubElement(root, "Header")
     header = fill_header(header)
     data = ET.SubElement(root, "Data")
@@ -302,7 +304,11 @@ def create_xml(filepath_fits, filepath_xml, catname, catnamespace, header_data):
             ET.SubElement(data, name).text = str(value)
 
     catalog = ET.SubElement(data, "Catalog")
+    catalog.set("format", "le3.cl.input.cat")
+    catalog.set("version", "0.1")
+
     data_container = ET.SubElement(catalog, "DataContainer")
+    data_container.set("filestatus", "PROPOSED")
     filename = ET.SubElement(data_container, "Filename").text = filepath_fits
  
     with open(filepath_xml, "x") as f:
@@ -378,4 +384,4 @@ if __name__ == '__main__':
     write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico_membership_from_am, "dpdLE3clCcpMembers", "http://euclid.esa.org/schema/dpd/le3/cl/ccpmembership")
     write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
     write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
-    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, "DpdLE3clCcpInputCat", "http://euclid.esa    .org/schema/dpd/le3/cl/ccpcatin")
+    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
