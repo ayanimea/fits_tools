@@ -290,20 +290,21 @@ def fill_header(header):
 
     return header
 
-def create_xml(filepath_fits, filepath_xml, catname, catnamespace, header_data):
-    ET.register_namespace('0', catnamespace)
-    root = ET.Element("ns1:" + catname)
-    root.set("xmlns:ns1", catnamespace)
+def create_xml(filepath_fits, filepath_xml, header_data, description_xml):
+    ET.register_namespace('0', description_xml["catnamespace"])
+    root = ET.Element("ns1:" + description_xml["catname"])
+    root.set("xmlns:ns1", description_xml["catnamespace"])
 
     header = ET.SubElement(root, "Header")
     header = fill_header(header)
     data = ET.SubElement(root, "Data")
 
-    if header_data:
+    if description_xml["parameters"]:
+        parameters = ET.SubElement(data, description_xml["parameters"])
         for name, value in header_data.items():
-            ET.SubElement(data, name).text = str(value)
+            ET.SubElement(parameters, name).text = str(value)
 
-    catalog = ET.SubElement(data, "Catalog")
+    catalog = ET.SubElement(data, description_xml["catfile"])
     catalog.set("format", "le3.cl.input.cat")
     catalog.set("version", "0.1")
 
@@ -324,10 +325,36 @@ def clean_and_create_file(output_folder, filename):
     
     return filepath_fits, filepath_xml
 
-def write_catalogs(filepath_fits, filepath_xml, data, header, catname, catnamespace):
+def write_catalogs(filepath_fits, filepath_xml, data, header, description_xml):
     fitsio.write(filepath_fits, data, header=header)
     print(f'Created {filepath_fits}')
-    create_xml(filepath_fits, filepath_xml, catname, catnamespace, header)
+    create_xml(filepath_fits, filepath_xml, header, description_xml)
+
+xml_description_det_cluster={"catname": "DpdLE3clDetClusters",
+                             "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/detdetections",
+                             "parameters": "ParamsList",
+                             "catfile": "ClustersFile",
+                             "cattype": "le3.cl.det.output.clusters"}
+xml_description_richness={"catname": "DpdLE3clRichness",
+                             "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/richrichness",
+                             "parameters": "",
+                             "catfile": "RichCLRichnessFile",
+                             "cattype": "le3.cl.rich.output.richness"}
+xml_description_zcl={"catname": "DpdLE3clZClOutput",
+                             "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/zcloutput",
+                             "parameters": "",
+                             "catfile": "ZClOutputFile",
+                             "cattype": "le3.cl.zcl.output"}
+xml_description_richmembers={"catname": "DpdLE3clRichMembers",
+                             "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/richmembership",
+                             "parameters": "",
+                             "catfile": "RichMembersFile",
+                             "cattype": "le3.cl.rich.output.membership"}
+xml_description_amicomembers={"catname": "DpdLE3clAssociations",
+                             "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/amicomembers",
+                             "parameters": "ParamsList",
+                             "catfile": "associationsAMICOClusters",
+                             "cattype": "le3.cl.det.output.AMICOass"}
 
 if __name__ == '__main__':
     # Constants
@@ -375,13 +402,13 @@ if __name__ == '__main__':
     data_prof = gen_prof_output(RA, DEC)
 
     # Write catalogs 
-    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
-    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
-    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico, "DpdLE3clRichness", "http://euclid.esa.org/schema/dpd/le3/cl/richrichness")
-    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav, "DpdLE3clRichness", "http://euclid.esa.org/schema/dpd/le3/cl/richrichness")
-    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav, "DpdLE3clZClOutput", "http://euclid.esa.org/schema/dpd/le3/cl/zcloutput")
-    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico, "DpdLE3clZClOutput", "http://euclid.esa.org/schema/dpd/le3/cl/zcloutput")
-    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico_membership_from_am, "dpdLE3clCcpMembers", "http://euclid.esa.org/schema/dpd/le3/cl/ccpmembership")
-    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
-    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, "dpdLE3clRichMembers", "http://euclid.esa.org/schema/dpd/le3/cl/richmembership")
-    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, "DpdLE3clCcpInputCat", "http://euclid.esa.org/schema/dpd/le3/cl/ccpcatin")
+    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, xml_description_det_cluster)
+    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico, xml_description_det_cluster)
+    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico, xml_description_richness)
+    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav, xml_description_richness)
+    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav, xml_description_zcl)
+    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico, xml_description_zcl)
+    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico, xml_description_amicomembers)
+    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, xml_description_richmembers)
+    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, xml_description_richmembers)
+    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, xml_description_det_cluster)
