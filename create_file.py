@@ -1,7 +1,9 @@
 import fitsio
 import numpy as np
 import os
-import pandas as pd
+import xml.dom.minidom as minidom
+import xml.etree.ElementTree as ET
+from astropy.table import Table
 
 def generate_vector(length, num_type, mini, maxi):
 
@@ -109,179 +111,108 @@ def gen_richcl_header(ra, dec):
     return header
 
 def gen_zcl_output(z):
-    col_id = np.array(range(row_numbers))
-    col_z = generate_vector(row_numbers, 'float', z['min'], z['max'])
-    col_z_err = generate_vector(row_numbers, 'float', 0, 1)
+    output = Table()
     
-    matrix = {'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'Z_ZCL': pd.Series(col_z, dtype=np.dtype('f4')),
-              'Z_ZCL_ERR': pd.Series(col_z_err, dtype=np.dtype('f4'))}
+    output['ID_CLUSTER'] = np.array(range(row_numbers))
+    output['Z_ZCL'] =generate_vector(row_numbers, 'float', z['min'], z['max'])
+    output['Z_ZCL_ERR'] = generate_vector(row_numbers, 'float', 0, 1)
 
-    df = pd.DataFrame(matrix) 
-
-    return df.to_records(index=False)
+    return output 
 
 def gen_prof_output(ra, dec):
-    col_id = np.array(range(row_numbers))
-    col_ra_cen_bestfit = generate_vector(row_numbers, 'float', ra['min'], ra['max'])
-    col_dec_cen_bestfit = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
-    col_log_scale_radius_bestfit = generate_vector(row_numbers, 'float', 0, 40)
-    col_ellipticity_bestfit = generate_vector(row_numbers, 'float', 0.5, 3)
-    col_pa_bestfit = generate_vector(row_numbers, 'float', 0, 1)
-    col_log_background_bestfit = generate_vector(row_numbers, 'float', 0, 1)
-    col_nofa_bestfit = generate_vector(row_numbers, 'float', 0, 1)
-    col_minus_log_likelihood = generate_vector(row_numbers, 'float', 0, 1)
-    col_deblending_order = generate_vector(row_numbers, 'float', 0, 1)
-    col_bic = generate_vector(row_numbers, 'float', 0, 1)
-    col_fit_nfev = generate_vector(row_numbers, 'float', 0, 1)
-    col_ra_cen_guess = generate_vector(row_numbers, 'float', ra['min'], ra['max'])
-    col_dec_cen_guess = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
-    col_log_scale_radius_guess = generate_vector(row_numbers, 'float', 0, 1)
-    col_elliptcity_guess = generate_vector(row_numbers, 'float', 0, 1)
-    col_pa_guess = generate_vector(row_numbers, 'float', 0, 1)
-    col_log_background_guess = generate_vector(row_numbers, 'float', 0, 1)
+    output = Table()
     
-    matrix = {'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'RA_CEN_BESTFIT': pd.Series(col_ra_cen_bestfit, dtype=np.dtype('f4')),
-              'DEC_CEN_BESTFIT': pd.Series(col_dec_cen_bestfit, dtype=np.dtype('f4')),
-              'LOG_SCALE_RADIUS_BESTFIT': pd.Series(col_log_scale_radius_bestfit, dtype=np.dtype('f4')),
-              'ELLIPTICITY_BESTFIT': pd.Series(col_ellipticity_bestfit, dtype=np.dtype('f4')),
-              'PA_BESTFIT': pd.Series(col_pa_bestfit, dtype=np.dtype('f4')),
-              'LOG_BACKGROUND_BESTFIT': pd.Series(col_log_background_bestfit, dtype=np.dtype('f4')),
-              'NOFA_BESTFIT': pd.Series(col_nofa_bestfit, dtype=np.dtype('f4')),
-              'MINUS_LOG_LIKELIHOOD': pd.Series(col_minus_log_likelihood, dtype=np.dtype('f4')),
-              'DEBLENDING_ORDER': pd.Series(col_deblending_order, dtype=np.dtype('f4')),
-              'BIC': pd.Series(col_bic, dtype=np.dtype('f4')),
-              'FIT_NFEV': pd.Series(col_fit_nfev, dtype=np.dtype('f4')),
-              'RA_CEN_GUESS': pd.Series(col_ra_cen_guess, dtype=np.dtype('f4')),
-              'DEC_CEN_GUESS': pd.Series(col_dec_cen_guess, dtype=np.dtype('f4')),
-              'LOG_SCALE_RADIUS_GUESS': pd.Series(col_log_scale_radius_guess, dtype=np.dtype('f4')),
-              'ELLIPTICITY_GUESS': pd.Series(col_elliptcity_guess, dtype=np.dtype('f4')),
-              'PA_GUESS': pd.Series(col_pa_guess, dtype=np.dtype('f4')),
-              'LOG_BACKGROUND_GUESS': pd.Series(col_log_background_guess, dtype=np.dtype('f4'))}
+    output['ID_CLUSTER'] = np.array(range(row_numbers))
+    output[ 'RA_CEN_BESTFIT'] = generate_vector(row_numbers, 'float', ra['min'], ra['max']) 
+    output['DEC_CEN_BESTFIT'] = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
+    output['LOG_SCALE_RADIUS_BESTFIT'] = generate_vector(row_numbers, 'float', 0, 40) 
+    output['ELLIPTICITY_BESTFIT']  = generate_vector(row_numbers, 'float', 0.5, 3)
+    output['PA_BESTFIT']  = generate_vector(row_numbers, 'float', 0, 1)
+    output['LOG_BACKGROUND_BESTFIT']  = generate_vector(row_numbers, 'float', 0, 1)
+    output['NOFA_BESTFIT']  = generate_vector(row_numbers, 'float', 0, 1)
+    output['MINUS_LOG_LIKELIHOOD'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['DEBLENDING_ORDER'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['BIC'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['FIT_NFEV'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['RA_CEN_GUESS'] = generate_vector(row_numbers, 'float', ra['min'], ra['max'])
+    output['DEC_CEN_GUESS'] = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
+    output['LOG_SCALE_RADIUS_GUESS'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['ELLIPTICITY_GUESS'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PA_GUESS'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['LOG_BACKGROUND_GUESS'] = generate_vector(row_numbers, 'float', 0, 1)
 
-    df = pd.DataFrame(matrix) 
-
-    return df.to_records(index=False)
+    return output
 
 def gen_rich_amico_output():
-    col_obj_id = generate_vector(row_numbers, 'int', 1, 10000)
-    col_id = np.array(range(row_numbers))
-    col_pmem = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_err = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_rad = generate_vector(row_numbers, 'float', 0, 40)
-    col_pmem_z = generate_vector(row_numbers, 'float', 0.5, 3)
-    col_pmem_rs = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_rs_err = generate_vector(row_numbers, 'float', 0, 1)
-    
-    matrix = {'OBJECT_ID': pd.Series(col_obj_id, dtype=np.dtype('i8')),
-              'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'PMEM': pd.Series(col_pmem, dtype=np.dtype('f4')),
-              'PMEM_ERR': pd.Series(col_pmem_err, dtype=np.dtype('f4')),
-              'PMEM_RAD': pd.Series(col_pmem_rad, dtype=np.dtype('f4')),
-              'PMEM_Z': pd.Series(col_pmem_z, dtype=np.dtype('f4')),
-              'PMEM_RS': pd.Series(col_pmem_rs, dtype=np.dtype('f4')),
-              'PMEM_RS_ERR': pd.Series(col_pmem_rs_err, dtype=np.dtype('f4'))}
+    output = Table()
 
-    df = pd.DataFrame(matrix) 
+    output['OBJECT_ID'] = generate_vector(row_numbers, 'int', 1, 10000)
+    output['ID_CLUSTER'] = np.array(range(row_numbers))
+    output['PMEM'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_ERR'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_RAD'] = generate_vector(row_numbers, 'float', 0, 40)
+    output['PMEM_Z'] = generate_vector(row_numbers, 'float', 0.5, 3)
+    output['PMEM_RS'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_RS_ERR'] = generate_vector(row_numbers, 'float', 0, 1)
 
-    return df.to_records(index=False)
+    return output
 
 def gen_rich_members_output():
-    col_id = np.array(range(row_numbers))
-    col_obj_id = generate_vector(row_numbers, 'int', 1, 999999)
-    col_pmem = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_err = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_rad = generate_vector(row_numbers, 'float', 1, 80)
-    col_pmem_z = generate_vector(row_numbers, 'float', 1, 3000)
-    col_pmem_rs = generate_vector(row_numbers, 'float', 0, 1)
-    col_pmem_err = generate_vector(row_numbers, 'float', 3.0, 80)
-    
-    matrix = {'OBJECT_ID': pd.Series(col_obj_id, dtype=np.dtype('i8')),
-              'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'PMEM': pd.Series(col_pmem, dtype=np.dtype('f4')),
-              'PMEM_ERR': pd.Series(col_pmem_err, dtype=np.dtype('f4')),
-              'PMEM_RAD': pd.Series(col_pmem_rad, dtype=np.dtype('f4')),
-              'PMEM_Z': pd.Series(col_pmem_z, dtype=np.dtype('f4')),
-              'PMEM_RS': pd.Series(col_pmem_rs, dtype=np.dtype('f4')),
-              'PMEM_RS_ERR': pd.Series(col_pmem_err, dtype=np.dtype('f4'))}
+    output = Table()
 
-    df = pd.DataFrame(matrix) 
+    output['OBJECT_ID'] = np.array(range(row_numbers))
+    output['ID_CLUSTER'] = generate_vector(row_numbers, 'int', 1, 999999)
+    output['PMEM'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_ERR'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_RAD'] = generate_vector(row_numbers, 'float', 1, 80)
+    output['PMEM_Z'] = generate_vector(row_numbers, 'float', 1, 3000)
+    output['PMEM_RS'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['PMEM_RS_ERR'] = generate_vector(row_numbers, 'float', 3.0, 80)
 
-    return df.to_records(index=False)
+    return output 
 
 def gen_richcl_output():
-    col_id = np.array(range(row_numbers))
-    col_rich_vec = generate_vector(row_numbers, 'float', 1, 3000)
-    col_rich_err_vec = generate_vector(row_numbers, 'float', 1, 80)
-    col_rad_vec = generate_vector(row_numbers, 'float', 1, 80)
-    col_rich = generate_vector(row_numbers, 'float', 1, 3000)
-    col_rich_err = generate_vector(row_numbers, 'float', 1, 80)
-    col_rad = generate_vector(row_numbers, 'float', 3.0, 80)
-    col_bkg_frac = generate_vector(row_numbers, 'float', 0, 1)
-    col_rich_vec_rs = generate_vector(row_numbers, 'float', 0, 10)
-    col_rich_err_vec_rs = generate_vector(row_numbers, 'float', 0, 10)
-    col_rad_vec_rs = generate_vector(row_numbers, 'float', 0, 10)
-    col_rich_rs = generate_vector(row_numbers, 'float', 0, 10)
-    col_rich_err_rs = generate_vector(row_numbers, 'float', 0, 10)
-    col_rad_rs = generate_vector(row_numbers, 'float', 0, 10)
-    
-    matrix = {'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'RICHNESS_VEC': pd.Series(col_rich_vec, dtype=np.dtype('f4')),
-              'RICHNESS_ERR_VEC': pd.Series(col_rich_err_vec, dtype=np.dtype('f4')),
-              'RADIUS_VEC': pd.Series(col_rad_vec, dtype=np.dtype('f4')),
-              'RICHNESS': pd.Series(col_rich, dtype=np.dtype('f4')),
-              'RICHNESS_ERR': pd.Series(col_rich_err, dtype=np.dtype('f4')),
-              'RADIUS': pd.Series(col_rad, dtype=np.dtype('f4')),
-              'BKG_FRACTION': pd.Series(col_bkg_frac, dtype=np.dtype('f4')),
-              'RICHNESS_VEC_RS': pd.Series(col_rich_vec_rs, dtype=np.dtype('f4')),
-              'RICHNESS_ERR_VEC_RS': pd.Series(col_rich_err_vec_rs, dtype=np.dtype('f4')),
-              'RADIUS_VEC_RS': pd.Series(col_rad_vec_rs, dtype=np.dtype('f4')),
-              'RICHNESS_RS': pd.Series(col_rich_rs, dtype=np.dtype('f4')),
-              'RICHNESS_ERR_RS': pd.Series(col_rich_err_rs, dtype=np.dtype('f4')),
-              'RADIUS_RS': pd.Series(col_rad_rs, dtype=np.dtype('f4'))}
+    output = Table()
 
-    df = pd.DataFrame(matrix) 
+    output['ID_CLUSTER'] = np.array(range(row_numbers))
+    output['RICHNESS_VEC'] = generate_vector(row_numbers, 'float', 1, 3000)
+    output['RICHNESS_ERR_VEC'] = generate_vector(row_numbers, 'float', 1, 80)
+    output['RADIUS_VEC'] = generate_vector(row_numbers, 'float', 1, 80)
+    output['RICHNESS'] = generate_vector(row_numbers, 'float', 1, 3000)
+    output['RICHNESS_ERR'] = generate_vector(row_numbers, 'float', 1, 80)
+    output['RADIUS'] = generate_vector(row_numbers, 'float', 3.0, 80)
+    output['BKG_FRACTION'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['RICHNESS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RICHNESS_ERR_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RADIUS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RICHNESS_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RICHNESS_ERR_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RADIUS_RS'] = generate_vector(row_numbers, 'float', 0, 10)
 
-    return df.to_records(index=False)
+    return output 
 
 def gen_detcl_output(ra, dec, z):
-    col_id = np.array(range(row_numbers))
-    col_ra = generate_vector(row_numbers, 'float', ra['min'], ra['max'])
-    col_dec = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
-    col_z = generate_vector(row_numbers, 'float', z['min'], z['max'])
-    col_z_err = generate_vector(row_numbers, 'float', 0, 1)
-    col_snr = generate_vector(row_numbers, 'float', 3.0, 80)
-    col_snr_unique = generate_vector(row_numbers, 'float', 3.0, 80)
-    col_rad = generate_vector(row_numbers, 'float', 0.5, 60)
-    col_richness = generate_vector(row_numbers, 'float', 0, 1)
-    col_lambda_star = generate_vector(row_numbers, 'float', 0, 1)
-    col_edge = generate_vector(row_numbers, 'int', 0, 1)
-    col_fraction_masked = generate_vector(row_numbers, 'float', 0, 1)
-    
-    matrix = {'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
-              'RIGHT_ASCENSION_CLUSTER': pd.Series(col_ra, dtype=np.dtype('f8')),
-              'DECLINATION_CLUSTER': pd.Series(col_dec, dtype=np.dtype('f8')),
-              'Z_CLUSTER': pd.Series(col_z, dtype=np.dtype('f4')),
-              'Z_ERR_CLUSTER': pd.Series(col_z_err, dtype=np.dtype('f4')),
-              'SNR_CLUSTER': pd.Series(col_snr, dtype=np.dtype('f4')),
-              'SNR_UNIQUE_CLUSTER': pd.Series(col_snr_unique, dtype=np.dtype('f4')),
-              'RADIUS_CLUSTER': pd.Series(col_rad, dtype=np.dtype('f4')),
-              'RICHNESS_CLUSTER': pd.Series(col_richness, dtype=np.dtype('f4')),
-              'LAMBDA_STAR_CLUSTER': pd.Series(col_lambda_star, dtype=np.dtype('f4')),
-              'FLAG_EDGE_CLUSTER': pd.Series(col_edge, dtype=np.dtype('f4')),
-              'FRAC_MASKED_CLUSTER': pd.Series(col_fraction_masked, dtype=np.dtype('f4'))}
+    output = Table()
+ 
+    output['ID_CLUSTER'] = np.array(range(row_numbers)) 
+    output['RIGHT_ASCENSION_CLUSTER'] = generate_vector(row_numbers, 'float', ra['min'], ra['max'])
+    output['DECLINATION_CLUSTER'] = generate_vector(row_numbers, 'float', dec['min'], dec['max'])
+    output['Z_CLUSTER'] = generate_vector(row_numbers, 'float', z['min'], z['max'])
+    output['Z_ERR_CLUSTER'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['SNR_CLUSTER']  = generate_vector(row_numbers, 'float', 3.0, 80)
+    output['SNR_UNIQUE_CLUSTER'] = generate_vector(row_numbers, 'float', 3.0, 80)
+    output['RADIUS_CLUSTER'] = generate_vector(row_numbers, 'float', 0.5, 60)
+    output['RICHNESS_CLUSTER'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['LAMBDA_STAR_CLUSTER'] = generate_vector(row_numbers, 'float', 0, 1)
+    output['FLAG_EDGE_CLUSTER'] = generate_vector(row_numbers, 'int', 0, 1)
+    output['FRAC_MASKED_CLUSTER'] = generate_vector(row_numbers, 'float', 0, 1)
 
-    df = pd.DataFrame(matrix) 
-
-    return df.to_records(index=False)
+    return output 
 
 def clean_old_files(dirty_file):
     if os.path.exists(dirty_file): 
         os.remove(dirty_file)
 
-import xml.dom.minidom as minidom
-import xml.etree.ElementTree as ET
 def prettify_xml(elem):
     """Return a pretty-printed XML string for the Element.
     """
@@ -355,7 +286,7 @@ def clean_and_create_file(output_folder, filename):
     return filepath_fits, filepath_xml
 
 def write_catalogs(filepath_fits, filepath_xml, data, header, description_xml, keywords_params):
-    fitsio.write(filepath_fits, data, header=header)
+    fitsio.write(filepath_fits, data.as_array(), header=header)
     print(f'Created {filepath_fits}')
     create_xml(filepath_fits, filepath_xml, header, description_xml, keywords_params)
 
