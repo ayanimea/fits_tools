@@ -187,6 +187,29 @@ def gen_rich_amico_output():
 
     return df.to_records(index=False)
 
+def gen_rich_members_output():
+    col_id = np.array(range(row_numbers))
+    col_obj_id = generate_vector(row_numbers, 'int', 1, 999999)
+    col_pmem = generate_vector(row_numbers, 'float', 0, 1)
+    col_pmem_err = generate_vector(row_numbers, 'float', 0, 1)
+    col_pmem_rad = generate_vector(row_numbers, 'float', 1, 80)
+    col_pmem_z = generate_vector(row_numbers, 'float', 1, 3000)
+    col_pmem_rs = generate_vector(row_numbers, 'float', 0, 1)
+    col_pmem_err = generate_vector(row_numbers, 'float', 3.0, 80)
+    
+    matrix = {'OBJECT_ID': pd.Series(col_obj_id, dtype=np.dtype('i8')),
+              'ID_CLUSTER': pd.Series(col_id, dtype=np.dtype('i8')),
+              'PMEM': pd.Series(col_pmem, dtype=np.dtype('f4')),
+              'PMEM_ERR': pd.Series(col_pmem_err, dtype=np.dtype('f4')),
+              'PMEM_RAD': pd.Series(col_pmem_rad, dtype=np.dtype('f4')),
+              'PMEM_Z': pd.Series(col_pmem_z, dtype=np.dtype('f4')),
+              'PMEM_RS': pd.Series(col_pmem_rs, dtype=np.dtype('f4')),
+              'PMEM_RS_ERR': pd.Series(col_pmem_err, dtype=np.dtype('f4'))}
+
+    df = pd.DataFrame(matrix) 
+
+    return df.to_records(index=False)
+
 def gen_richcl_output():
     col_id = np.array(range(row_numbers))
     col_rich_vec = generate_vector(row_numbers, 'float', 1, 3000)
@@ -290,7 +313,7 @@ def fill_header(header):
 
     return header
 
-def create_xml(filepath_fits, filepath_xml, header_data, description_xml):
+def create_xml(filepath_fits, filepath_xml, header_data, description_xml, keywords_params):
     ET.register_namespace('0', description_xml["catnamespace"])
     root = ET.Element("ns1:" + description_xml["catname"])
     root.set("xmlns:ns1", description_xml["catnamespace"])
@@ -301,16 +324,22 @@ def create_xml(filepath_fits, filepath_xml, header_data, description_xml):
 
     if description_xml["parameters"]:
         parameters = ET.SubElement(data, description_xml["parameters"])
-        for name, value in header_data.items():
-            ET.SubElement(parameters, name).text = str(value)
+        for name in keywords_params:
+            try:
+                ET.SubElement(parameters, name[0]).text = str(header_data[name[0]])
+            except KeyError:
+                if name[1] == int:
+                    ET.SubElement(parameters, name[0]).text = str(0)
+                elif name[1] == bool:
+                    ET.SubElement(parameters, name[0]).text = "False"
 
     catalog = ET.SubElement(data, description_xml["catfile"])
-    catalog.set("format", "le3.cl.input.cat")
+    catalog.set("format", description_xml["cattype"])
     catalog.set("version", "0.1")
 
     data_container = ET.SubElement(catalog, "DataContainer")
     data_container.set("filestatus", "PROPOSED")
-    filename = ET.SubElement(data_container, "Filename").text = filepath_fits
+    filename = ET.SubElement(data_container, "FileName").text = filepath_fits
  
     with open(filepath_xml, "x") as f:
         f.write(prettify_xml(root))
@@ -325,10 +354,23 @@ def clean_and_create_file(output_folder, filename):
     
     return filepath_fits, filepath_xml
 
-def write_catalogs(filepath_fits, filepath_xml, data, header, description_xml):
+def write_catalogs(filepath_fits, filepath_xml, data, header, description_xml, keywords_params):
     fitsio.write(filepath_fits, data, header=header)
     print(f'Created {filepath_fits}')
-    create_xml(filepath_fits, filepath_xml, header, description_xml)
+    create_xml(filepath_fits, filepath_xml, header, description_xml, keywords_params)
+
+keywords_params_detcl=[("MIN_Z", int), ("MAX_Z", int), ("MIN_RA", int), ("MAX_RA", int),
+                       ("MIN_DEC", int), ("MAX_DEC", int), ("SNR_THR", int), ("CUBE_XY_STEP", int),
+                       ("MAX_AREA_DEG", int), ("L_BORDER_DEG", int), ("DZ", int), ("ZSTEP", int),
+                       ("KRN_SCL1", int), ("KRN_SCL2", int), ("DR_LIM", int), ("DZ_LIM", int),
+                       ("FROM_DENSITY_MAP", bool), ("OMEGA_MAT", int), ("OMEGA_VAC", int),
+                       ("HUBBLE_PAR", int), ("W_EQ_STATE", int), ("N_EFF", int), ("TEMP_CMB", int),
+                       ("MAX_NB", int), ("MIN_PROB", int)]
+
+keywords_params_richcl_richness=[("MIN_RA", int), ("MAX_RA", int), ("MIN_DEC", int), ("MAX_DEC", int),
+                                 ("SNR_THR", int), ("MODEL_ID", int), ("MAX_NB", int), ("MIN_PROB", int)]
+keywords_params_richcl_members=[("SNR_THR", int), ("MODEL_ID", int), ("MAX_NB", int), ("MIN_PROB", int)]
+keywords_params_zcl = None
 
 xml_description_det_cluster={"catname": "DpdLE3clDetClusters",
                              "catnamespace": "http://euclid.esa.org/schema/dpd/le3/cl/detdetections",
@@ -384,9 +426,9 @@ if __name__ == '__main__':
     header_richcl_pzwav = gen_richcl_header(RA, DEC)
     header_zcl_pzwav = gen_zcl_header()
     header_zcl_amico = gen_zcl_header()
-    header_amico_membership_from_am = None 
-    header_amico_membership_from_rich = None 
-    header_pzwav_membership = None
+    header_amico_membership_from_am = gen_zcl_header() 
+    header_amico_membership_from_rich = gen_zcl_header() 
+    header_pzwav_membership = gen_zcl_header()
     header_prof = gen_prof_header(RA, DEC, Z)
     
     # Generate data 
@@ -397,18 +439,18 @@ if __name__ == '__main__':
     data_zcl_pzwav = gen_zcl_output(Z)
     data_zcl_amico = gen_zcl_output(Z)
     data_amico_membership_from_am = gen_rich_amico_output()
-    data_amico_membership_from_rich = None
-    data_pzwav_membership = None
+    data_amico_membership_from_rich = gen_rich_members_output()
+    data_pzwav_membership = gen_rich_members_output()
     data_prof = gen_prof_output(RA, DEC)
 
     # Write catalogs 
-    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, xml_description_det_cluster)
-    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico, xml_description_det_cluster)
-    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico, xml_description_richness)
-    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav, xml_description_richness)
-    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav, xml_description_zcl)
-    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico, xml_description_zcl)
-    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico, xml_description_amicomembers)
-    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, xml_description_richmembers)
-    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, xml_description_richmembers)
-    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, xml_description_det_cluster)
+    write_catalogs(amico_file, amico_file_xml, data_amico, header_amico, xml_description_det_cluster, keywords_params_detcl)
+    write_catalogs(pzwav_file, pzwav_file_xml, data_pzwav, header_amico, xml_description_det_cluster, keywords_params_detcl)
+    write_catalogs(richcl_amico_file, richcl_amico_file_xml, data_richcl_amico, header_richcl_amico, xml_description_richness, keywords_params_richcl_richness)
+    write_catalogs(richcl_pzwav_file, richcl_pzwav_file_xml, data_richcl_pzwav, header_richcl_pzwav, xml_description_richness, keywords_params_richcl_richness)
+    write_catalogs(zcl_pzwav_file, zcl_pzwav_file_xml, data_zcl_pzwav, header_zcl_pzwav, xml_description_zcl, keywords_params_zcl)
+    write_catalogs(zcl_amico_file, zcl_amico_file_xml, data_zcl_amico, header_zcl_amico, xml_description_zcl, keywords_params_zcl)
+    write_catalogs(amico_membership_from_am_file, amico_membership_from_am_file_xml, data_amico_membership_from_am, header_amico, xml_description_amicomembers, keywords_params_detcl)
+    write_catalogs(amico_membership_from_rich_file, amico_membership_from_rich_file_xml, data_amico_membership_from_rich, header_amico_membership_from_rich, xml_description_richmembers, keywords_params_richcl_members)
+    write_catalogs(pzwav_membership_file, pzwav_membership_file_xml, data_pzwav_membership, header_pzwav_membership, xml_description_richmembers, keywords_params_richcl_members)
+    write_catalogs(prof_file, prof_file_xml, data_prof, header_prof, xml_description_det_cluster, keywords_params_detcl)

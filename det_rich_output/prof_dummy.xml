@@ -51,7 +51,7 @@
     </ParamsList>
     <ClustersFile format="le3.cl.det.output.clusters" version="0.1">
       <DataContainer filestatus="PROPOSED">
-        <FileName>/home/user/Work/Projects/fits_tools/det_rich_output/amico_dummy.fits</FileName>
+        <FileName>/home/user/Work/Projects/fits_tools/det_rich_output/prof_dummy.fits</FileName>
       </DataContainer>
     </ClustersFile>
   </Data>

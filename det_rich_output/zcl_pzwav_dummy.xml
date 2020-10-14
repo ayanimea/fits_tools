@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ns1:DpdLE3clZClOutput xmlns:ns1="http://euclid.esa.org/schema/dpd/le3/cl/zcloutput">
+  <Header>
+    <ProductId>61044e80-fed2-427b-aabf-c608980814a5</ProductId>
+    <ProductType>TestProduct</ProductType>
+    <SoftwareName>NA</SoftwareName>
+    <SoftwareRelease>3.5</SoftwareRelease>
+    <EuclidPipelineSoftwareRelease>0.0</EuclidPipelineSoftwareRelease>
+    <ProdSDC>SDC-FR</ProdSDC>
+    <DataSetRelease>NA</DataSetRelease>
+    <Purpose>UNKNOWN</Purpose>
+    <PlanId>ec0f9326-5e57-4e36-af30-8b6352c1a650</PlanId>
+    <PPOId>bbab3151-64b7-4155-b2d3-080fd84e3287</PPOId>
+    <PipelineDefinitionId>PipelineDefinitionId</PipelineDefinitionId>
+    <PipelineRun>NA</PipelineRun>
+    <ExitStatusCode>NA</ExitStatusCode>
+    <ManualValidationStatus>UNKNOWN</ManualValidationStatus>
+    <ExpirationDate>2020-07-09T10:48:43.495Z</ExpirationDate>
+    <ToBePublished>false</ToBePublished>
+    <Published>false</Published>
+    <Curator>Curator0</Curator>
+    <CreationDate>2020-07-09T10:48:43.495Z</CreationDate>
+  </Header>
+  <Data>
+    <ZClOutputFile format="le3.cl.zcl.output" version="0.1">
+      <DataContainer filestatus="PROPOSED">
+        <FileName>/home/user/Work/Projects/fits_tools/det_rich_output/zcl_pzwav_dummy.fits</FileName>
+      </DataContainer>
+    </ZClOutputFile>
+  </Data>
+</ns1:DpdLE3clZClOutput>

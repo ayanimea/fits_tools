@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns1:DpdLE3clDetClusters xmlns:ns1="http://euclid.esa.org/schema/dpd/le3/cl/detdetections">
+<ns1:DpdLE3clAssociations xmlns:ns1="http://euclid.esa.org/schema/dpd/le3/cl/amicomembers">
   <Header>
     <ProductId>61044e80-fed2-427b-aabf-c608980814a5</ProductId>
     <ProductType>TestProduct</ProductType>
@@ -49,10 +49,10 @@
       <MAX_NB>0</MAX_NB>
       <MIN_PROB>0</MIN_PROB>
     </ParamsList>
-    <ClustersFile format="le3.cl.det.output.clusters" version="0.1">
+    <associationsAMICOClusters format="le3.cl.det.output.AMICOass" version="0.1">
       <DataContainer filestatus="PROPOSED">
-        <FileName>/home/user/Work/Projects/fits_tools/det_rich_output/amico_dummy.fits</FileName>
+        <FileName>/home/user/Work/Projects/fits_tools/det_rich_output/amico_membership_from_am_dummy.fits</FileName>
       </DataContainer>
-    </ClustersFile>
+    </associationsAMICOClusters>
   </Data>
-</ns1:DpdLE3clDetClusters>
+</ns1:DpdLE3clAssociations>
