@@ -5,10 +5,10 @@ import xml.dom.minidom as minidom
 import xml.etree.ElementTree as ET
 from astropy.table import Table
 
-def generate_vector(length, num_type, mini, maxi):
+def generate_vector(length, num_type, mini, maxi, col_nb=1):
 
     if num_type is 'float':
-        new_vector = np.random.rand(length) * (maxi - mini) + mini
+        new_vector = np.random.random_sample((length, col_nb)) * (maxi - mini) + mini
     elif num_type is 'int':
         new_vector = np.random.random_integers(mini, maxi, length)        
 
@@ -175,16 +175,16 @@ def gen_richcl_output():
     output = Table()
 
     output['ID_CLUSTER'] = np.array(range(row_numbers))
-    output['RICHNESS_VEC'] = generate_vector(row_numbers, 'float', 1, 3000)
-    output['RICHNESS_ERR_VEC'] = generate_vector(row_numbers, 'float', 1, 80)
-    output['RADIUS_VEC'] = generate_vector(row_numbers, 'float', 1, 80)
+    output['RICHNESS_VEC'] = generate_vector(row_numbers, 'float', 1, 3000, col_nb=300)
+    output['RICHNESS_ERR_VEC'] = generate_vector(row_numbers, 'float', 1, 80, col_nb=300)
+    output['RADIUS_VEC'] = generate_vector(row_numbers, 'float', 1, 80, col_nb=300)
     output['RICHNESS'] = generate_vector(row_numbers, 'float', 1, 3000)
     output['RICHNESS_ERR'] = generate_vector(row_numbers, 'float', 1, 80)
     output['RADIUS'] = generate_vector(row_numbers, 'float', 3.0, 80)
     output['BKG_FRACTION'] = generate_vector(row_numbers, 'float', 0, 1)
-    output['RICHNESS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
-    output['RICHNESS_ERR_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
-    output['RADIUS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10)
+    output['RICHNESS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10, col_nb=300)
+    output['RICHNESS_ERR_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10, col_nb=300)
+    output['RADIUS_VEC_RS'] = generate_vector(row_numbers, 'float', 0, 10, col_nb=300)
     output['RICHNESS_RS'] = generate_vector(row_numbers, 'float', 0, 10)
     output['RICHNESS_ERR_RS'] = generate_vector(row_numbers, 'float', 0, 10)
     output['RADIUS_RS'] = generate_vector(row_numbers, 'float', 0, 10)
